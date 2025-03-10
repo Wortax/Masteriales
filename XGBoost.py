@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from scipy.stats import randint, uniform
 
 
-def train_and_test(data, labels, name, multiclass = False):
+def train_and_test(data, labels, name, multiclass = False, parameter_tuning_type = "Default"):
     data = data.dropna()
     labels = labels.loc[data.index]
 
@@ -21,7 +21,7 @@ def train_and_test(data, labels, name, multiclass = False):
         xgb_model = XGBClassifier(random_state=42, eval_metric='logloss', objective = 'binary:logistic')
 
 
-    param_distributions = {
+    param_list = {
         'n_estimators': randint(50, 300),
         'max_depth': randint(10, 40),
         'learning_rate': uniform(0.01, 0.3),
@@ -29,39 +29,56 @@ def train_and_test(data, labels, name, multiclass = False):
         'subsample': uniform(0.5, 0.5)
     }
 
-    random_search = RandomizedSearchCV(
-        estimator=xgb_model,
-        param_distributions=param_distributions,
-        n_iter=20,
-        scoring='accuracy',
-        cv=5,
-        verbose=1,
-        n_jobs=-1,
-        random_state=42
-    )
+    if parameter_tuning_type == "Default" :
+        xgb_model.fit(X_train, y_train)
+        best_param = xgb_model.get_xgb_params()
+        predictions = xgb_model.predict(X_test)
+        probabilities = xgb_model.predict_proba(X_test)
+    else:
+        if parameter_tuning_type == "Random":
+            search = RandomizedSearchCV(
+                estimator=xgb_model,
+                param_distributions=param_list,
+                n_iter=20,
+                scoring='accuracy',
+                cv=5,
+                verbose=1,
+                n_jobs=-1,
+                random_state=42
+            )
+        elif parameter_tuning_type == "Grid" :
+            search = GridSearchCV(estimator=xgb_model,
+                                  param_grid=param_list,
+                                  scoring='accuracy',
+                                  cv=5,
+                                  verbose=1,
+                                  n_jobs=-1)
+        search.fit(X_train, y_train)
+        best_model = search.best_estimator_
+        predictions = best_model.predict(X_test)
+        best_param = best_model.get_xgb_params()
+        probabilities = best_model.predict_proba(X_test)
 
-    random_search.fit(X_train, y_train)
 
-    best_model = random_search.best_estimator_
 
-    predictions = best_model.predict(X_test)
+
 
     accuracy = accuracy_score(y_test, predictions)
 
     if multiclass:
-        probabilities = best_model.predict_proba(X_test)
         f1 = f1_score(y_test, predictions, average='weighted')
         auc = roc_auc_score(y_test, probabilities, multi_class="ovr", average="macro")
     else:
-        probabilities = best_model.predict_proba(X_test)[:, 1]
         f1 = f1_score(y_test, predictions)
-        auc = roc_auc_score(y_test, probabilities)
+        auc = roc_auc_score(y_test, probabilities[:, 1])
 
-    print("XGBoost", name)
-    print("Best Parameters:", best_model.get_xgb_params())
-    print("Accuracy:", round(accuracy, 4))
-    print("F1 Score:", round(f1, 4))
-    print("AUC:", round(auc, 4))
-    print()
+    results = ""
+    results += "XGBoost"+str(name) + "\n"
+    results += "Best parameters:"+str(best_param)+"\n"
+    results += "Accuracy:"+str(round(accuracy, 4))+"\n"
+    results += "F1 Score:"+str(round(f1, 4)) + "\n"
+    results += "AUC:"+str(round(auc, 4))+"\n\n"
+
+    return results
 
 

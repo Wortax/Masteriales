@@ -6,6 +6,9 @@ import CatBoost
 import LightGBM
 #import Hyperfast
 
+def Write_and_Update(opened_file,str):
+    opened_file.write(str)
+    opened_file.flush()
 
 def Benchmark(bench_rand = False, bench_xgb = False, bench_catboost = False, bench_lightgbm = False, bench_hypfast = False):
     f = open("log.txt", "a")
@@ -24,46 +27,41 @@ def Benchmark(bench_rand = False, bench_xgb = False, bench_catboost = False, ben
     data_covid = pd.read_csv('covid_19/Covid-19.csv', delim_whitespace=True)
     labels_covid = pd.read_csv('covid_19/labels_Covid-19.csv')["Condition"]
 
-    f.write(RandomForest.train_and_test(data_derm, labels_derm, "derm", True, "Default"))
-    f.close()
-    f.write(RandomForest.train_and_test(data_derm, labels_derm, "derm", True, "Random"))
-    f.write(RandomForest.train_and_test(data_derm, labels_derm, "derm", True, "Grid"))
-    return
+    for param_test_type in ["Default", "Random", "Grid"]:
+        if(bench_rand == True):
+            Write_and_Update(f, RandomForest.train_and_test(data_derm, labels_derm, "derm", True, param_test_type))
+            Write_and_Update(f, RandomForest.train_and_test(data_heart, labels_heart, "Heart", False, param_test_type))
+            Write_and_Update(f, RandomForest.train_and_test(data_breast, labels_breast, "Breast", False, param_test_type))
+            Write_and_Update(f, RandomForest.train_and_test(data_diabete, labels_diabete, "Diabete", False, param_test_type))
+            Write_and_Update(f, RandomForest.train_and_test(data_covid, labels_covid, "Covid-19", False, param_test_type))
 
-    if(bench_rand == True):
-        RandomForest.train_and_test(data_derm, labels_derm, "derm", True)
-        RandomForest.train_and_test(data_heart, labels_heart, "Heart")
-        RandomForest.train_and_test(data_breast, labels_breast, "Breast")
-        RandomForest.train_and_test(data_diabete, labels_diabete, "Diabete")
-        RandomForest.train_and_test(data_covid, labels_covid, "Covid-19")
+        if (bench_xgb == True):
+            Write_and_Update(f, XGBoost.train_and_test(data_derm, labels_derm, "derm", True, param_test_type))
+            Write_and_Update(f, XGBoost.train_and_test(data_heart, labels_heart, "Heart", False, param_test_type))
+            Write_and_Update(f, XGBoost.train_and_test(data_breast, labels_breast, "Breast", False, param_test_type))
+            Write_and_Update(f, XGBoost.train_and_test(data_diabete, labels_diabete, "Diabete", False, param_test_type))
+            Write_and_Update(f, XGBoost.train_and_test(data_covid, labels_covid, "Covid-19", False, param_test_type))
 
-    if (bench_xgb == True):
-        XGBoost.train_and_test(data_derm, labels_derm, "derm", True)
-        XGBoost.train_and_test(data_heart, labels_heart, "Heart")
-        XGBoost.train_and_test(data_breast, labels_breast, "Breast")
-        XGBoost.train_and_test(data_diabete, labels_diabete, "Diabete")
-        XGBoost.train_and_test(data_covid, labels_covid, "Covid-19")
+        if (bench_catboost == True):
+            Write_and_Update(f, CatBoost.train_and_test(data_derm, labels_derm, "derm",True, param_test_type))
+            Write_and_Update(f, CatBoost.train_and_test(data_heart, labels_heart, "Heart", False, param_test_type))
+            Write_and_Update(f, CatBoost.train_and_test(data_breast, labels_breast, "Breast", False, param_test_type))
+            Write_and_Update(f, CatBoost.train_and_test(data_diabete, labels_diabete, "Diabete", False, param_test_type))
+            Write_and_Update(f, CatBoost.train_and_test(data_covid, labels_covid, "Covid-19", False, param_test_type))
 
-    if (bench_catboost == True):
-        CatBoost.train_and_test(data_derm, labels_derm, "derm",True)
-        CatBoost.train_and_test(data_heart, labels_heart, "Heart")
-        CatBoost.train_and_test(data_breast, labels_breast, "Breast")
-        CatBoost.train_and_test(data_diabete, labels_diabete, "Diabete")
-        CatBoost.train_and_test(data_covid, labels_covid, "Covid-19")
+        if (bench_lightgbm == True):
+            Write_and_Update(f, LightGBM.train_and_test(data_derm, labels_derm, "derm", True, param_test_type))
+            Write_and_Update(f, LightGBM.train_and_test(data_heart, labels_heart, "Heart", False, param_test_type))
+            Write_and_Update(f, LightGBM.train_and_test(data_breast, labels_breast, "Breast", False, param_test_type))
+            Write_and_Update(f, LightGBM.train_and_test(data_diabete, labels_diabete, "Diabete", False, param_test_type))
+            Write_and_Update(f, LightGBM.train_and_test(data_covid, labels_covid, "Covid-19", False, param_test_type))
 
-    if (bench_lightgbm == True):
-        LightGBM.train_and_test(data_derm, labels_derm, "derm", True)
-        LightGBM.train_and_test(data_heart, labels_heart, "Heart")
-        LightGBM.train_and_test(data_breast, labels_breast, "Breast")
-        LightGBM.train_and_test(data_diabete, labels_diabete, "Diabete")
-        LightGBM.train_and_test(data_covid, labels_covid, "Covid-19")
+        #if (bench_hypfast == True):
+            #Hyperfast.train_and_test(data_derm, labels_derm, "derm")
+            #Hyperfast.train_and_test(data_heart, labels_heart, "Heart")
+            #Hyperfast.train_and_test(data_breast, labels_breast, "Breast")
+            #Hyperfast.train_and_test(data_diabete, labels_diabete, "Diabete")
+            #Hyperfast.train_and_test(data_covid, labels_covid, "Covid-19")
+        f.close()
 
-    #if (bench_hypfast == True):
-        #Hyperfast.train_and_test(data_derm, labels_derm, "derm")
-        #Hyperfast.train_and_test(data_heart, labels_heart, "Heart")
-        #Hyperfast.train_and_test(data_breast, labels_breast, "Breast")
-        #Hyperfast.train_and_test(data_diabete, labels_diabete, "Diabete")
-        #Hyperfast.train_and_test(data_covid, labels_covid, "Covid-19")
-    f.close()
-
-Benchmark(True, True, True, True, False)
+Benchmark(True, True, False, True, False)

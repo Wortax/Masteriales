@@ -5,7 +5,7 @@ import lightgbm as lgb
 from scipy.stats import randint, uniform
 import os
 
-def train_and_test(data, labels, name, multiclass=False):
+def train_and_test(data, labels, name, multiclass=False, parameter_tuning_type = "Default"):
     data = data.dropna()
     labels = labels.loc[data.index]
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.3, random_state=42)
@@ -16,7 +16,7 @@ def train_and_test(data, labels, name, multiclass=False):
     else:
         lgb_model = lgb.LGBMClassifier(random_state=42, verbose=-1)
 
-    param_distributions = {
+    param_list = {
         'n_estimators': randint(50, 300),
         'max_depth': [None] + list(range(10, 50, 10)),
         'min_child_samples': randint(5, 50),
@@ -25,22 +25,34 @@ def train_and_test(data, labels, name, multiclass=False):
         'learning_rate': uniform(0.01, 0.3)
     }
 
-    random_search = RandomizedSearchCV(
-        estimator=lgb_model,
-        param_distributions=param_distributions,
-        scoring='accuracy',
-        cv=5,
-        verbose=1,
-        n_jobs=-1,
-        n_iter=50,
-        random_state=42
-    )
+    if parameter_tuning_type == "Default":
+        lgb_model.fit(X_train, y_train)
+        best_param = lgb_model.get_params()
+        predictions = lgb_model.predict(X_test)
+    else:
+        if parameter_tuning_type == "Random":
+            search = RandomizedSearchCV(
+                estimator=lgb_model,
+                param_distributions=param_list,
+                scoring='accuracy',
+                cv=5,
+                verbose=1,
+                n_jobs=-1,
+                n_iter=50,
+                random_state=42
+            )
 
-    random_search.fit(X_train, y_train)
+        elif parameter_tuning_type == "Grid":
+            search = GridSearchCV(estimator=lgb_model,
+                                  param_grid=param_list,
+                                  scoring='accuracy',
+                                  cv=5,
+                                  verbose=1,
+                                  n_jobs=-1)
 
-    best_model = random_search.best_estimator_
-
-    predictions = best_model.predict(X_test)
+        search.fit(X_train, y_train)
+        best_model = search.best_estimator_
+        predictions = best_model.predict(X_test)
 
     accuracy = accuracy_score(y_test, predictions)
 
@@ -53,10 +65,11 @@ def train_and_test(data, labels, name, multiclass=False):
         f1 = f1_score(y_test, predictions)
         auc = roc_auc_score(y_test, probabilities)
 
-    print("LightGBM", name)
-    print("Best Parameters:", best_model.get_params())
-    print("Accuracy:", round(accuracy, 4))
-    print("F1 Score:", round(f1, 4))
-    print("AUC:", round(auc, 4))
-    print()
-    print()
+    results = ""
+    results += "LightGBM"+str(name)
+    results += "Best Parameters:"+str(best_param)
+    results += "Accuracy:"+str(round(accuracy, 4))
+    results += "F1 Score:"+str(round(f1, 4))
+    results += "AUC:"+str(round(auc, 4))
+
+    return results
