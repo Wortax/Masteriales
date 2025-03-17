@@ -4,7 +4,7 @@ import RandomForest
 import XGBoost
 import CatBoost
 import LightGBM
-#import Hyperfast
+import Hyperfast
 
 def Write_and_Update(opened_file,str):
     opened_file.write(str)
@@ -56,12 +56,12 @@ def Benchmark(bench_rand = False, bench_xgb = False, bench_catboost = False, ben
             Write_and_Update(f, LightGBM.train_and_test(data_diabete, labels_diabete, "Diabete", False, param_test_type))
             Write_and_Update(f, LightGBM.train_and_test(data_covid, labels_covid, "Covid-19", False, param_test_type))
 
-        #if (bench_hypfast == True):
-            #Hyperfast.train_and_test(data_derm, labels_derm, "derm")
-            #Hyperfast.train_and_test(data_heart, labels_heart, "Heart")
-            #Hyperfast.train_and_test(data_breast, labels_breast, "Breast")
-            #Hyperfast.train_and_test(data_diabete, labels_diabete, "Diabete")
-            #Hyperfast.train_and_test(data_covid, labels_covid, "Covid-19")
+        if (bench_hypfast == True):
+            Hyperfast.train_and_test(data_derm, labels_derm, "derm")
+            Hyperfast.train_and_test(data_heart, labels_heart, "Heart")
+            Hyperfast.train_and_test(data_breast, labels_breast, "Breast")
+            Hyperfast.train_and_test(data_diabete, labels_diabete, "Diabete")
+            Hyperfast.train_and_test(data_covid, labels_covid, "Covid-19")
         f.close()
 
 Benchmark(True, True, False, True, False)
